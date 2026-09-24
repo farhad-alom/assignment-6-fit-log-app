@@ -1,28 +1,70 @@
-import type { Workout } from "@/types/workout";
+import type { Workout } from '@/types/workout';
 
-const PLAN_KEY = "fitlog-plan";
-const SAVED_KEY = "fitlog-saved";
+const PLAN_KEY = 'fitlog-plan';
+const SAVED_KEY = 'fitlog-saved';
 
-export function getPlan(): Workout[] {
-    if (typeof window === "undefined") return [];
+export const getPlan = (): Workout[] => {
+    if (typeof window === 'undefined') {
+        return [];
+    }
 
-    const data = localStorage.getItem(PLAN_KEY);
+    try {
+        const data = localStorage.getItem(PLAN_KEY);
 
-    return data ? JSON.parse(data) : [];
-}
+        if (!data) {
+            return [];
+        }
 
-export function savePlan(workouts: Workout[]) {
-    localStorage.setItem(PLAN_KEY, JSON.stringify(workouts));
-}
+        const parsed = JSON.parse(data);
 
-export function getSaved(): Workout[] {
-    if (typeof window === "undefined") return [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
 
-    const data = localStorage.getItem(SAVED_KEY);
+export const savePlan = (workouts: Workout[]) => {
+    if (typeof window === 'undefined') {
+        return;
+    }
 
-    return data ? JSON.parse(data) : [];
-}
+    localStorage.setItem(
+        PLAN_KEY,
+        JSON.stringify(workouts)
+    );
 
-export function saveSaved(workouts: Workout[]) {
-    localStorage.setItem(SAVED_KEY, JSON.stringify(workouts));
+    window.dispatchEvent(new Event('fitlog-storage'));
+};
+
+export const getSaved = (): Workout[] => {
+    if (typeof window === 'undefined') {
+        return [];
+    }
+
+    try {
+        const data = localStorage.getItem(SAVED_KEY);
+
+        if (!data) {
+            return [];
+        }
+
+        const parsed = JSON.parse(data);
+
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
+
+export const saveSaved = (workouts: Workout[]) => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    localStorage.setItem(
+        SAVED_KEY,
+        JSON.stringify(workouts)
+    );
+
+    window.dispatchEvent(new Event('fitlog-storage'));
 };
