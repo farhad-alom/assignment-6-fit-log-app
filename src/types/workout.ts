@@ -2,7 +2,7 @@ export interface Workout {
     id: string;
     name: string;
     description: string;
-    category: string[];
+    category: string;
     equipment: string;
     difficulty: string;
     sets: number;
@@ -12,4 +12,4 @@ export interface Workout {
     rating: number;
     image: string;
     instructions: string[];
-};
+}
