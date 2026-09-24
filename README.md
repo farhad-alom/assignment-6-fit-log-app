@@ -90,6 +90,8 @@ Open the application in your browser:
 ```text
 http://localhost:3000
 ```
+## [Click to Vercel Live Link ](https://assign-6-fit-log-app.vercel.app)
+
 
 ## Production Build
 
@@ -104,10 +106,6 @@ To start the production server:
 ```bash
 npm start
 ```
-
-## Deployment
-
-The project can be deployed using platforms such as Vercel, Netlify, or Cloudflare Pages.
 
 ## Author
 ### Md. Farhad Alom
