@@ -2,6 +2,7 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import WorkoutActions from '@/components/WorkoutActions';
 import {
     ArrowLeft,
     Clock3,
@@ -121,15 +122,7 @@ const WorkoutDetails = async ({ params }: WorkoutDetailsProps) => {
 
                         </div>
 
-                        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                            <button className="flex-1 rounded-full bg-lime-400 px-6 py-3.5 text-sm font-bold uppercase text-black">
-                                Add to Plan
-                            </button>
-
-                            <button className="flex-1 rounded-full border border-zinc-700 px-6 py-3.5 text-sm font-bold uppercase text-white">
-                                Save for Later
-                            </button>
-                        </div>
+                        <WorkoutActions workout={workout} />
 
                     </div>
                 </div>
