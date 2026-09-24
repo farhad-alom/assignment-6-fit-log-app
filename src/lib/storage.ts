@@ -17,7 +17,11 @@ export const getPlan = (): Workout[] => {
 
         const parsed = JSON.parse(data);
 
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+
+        return parsed;
     } catch {
         return [];
     }
@@ -33,7 +37,9 @@ export const savePlan = (workouts: Workout[]) => {
         JSON.stringify(workouts)
     );
 
-    window.dispatchEvent(new Event('fitlog-storage'));
+    window.dispatchEvent(
+        new Event('fitlog-storage')
+    );
 };
 
 export const getSaved = (): Workout[] => {
@@ -50,7 +56,11 @@ export const getSaved = (): Workout[] => {
 
         const parsed = JSON.parse(data);
 
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+
+        return parsed;
     } catch {
         return [];
     }
@@ -66,5 +76,7 @@ export const saveSaved = (workouts: Workout[]) => {
         JSON.stringify(workouts)
     );
 
-    window.dispatchEvent(new Event('fitlog-storage'));
+    window.dispatchEvent(
+        new Event('fitlog-storage')
+    );
 };

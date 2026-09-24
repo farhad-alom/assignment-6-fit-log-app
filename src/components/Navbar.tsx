@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPlan, getSaved } from '@/lib/storage';
+import { getPlan, getSaved } from '../lib/storage';
 
 const Navbar = () => {
     const [planCount, setPlanCount] = useState(0);

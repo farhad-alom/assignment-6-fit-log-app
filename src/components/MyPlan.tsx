@@ -2,33 +2,20 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-    ArrowLeft,
-    Bookmark,
-    CalendarDays,
-    Dumbbell,
-    Flame,
-} from 'lucide-react';
+import { ArrowLeft, Bookmark, CalendarDays, Dumbbell, Flame } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 import PlanCard from './PlanCard';
 import type { Workout } from '@/types/workout';
-import {
-    getPlan,
-    getSaved,
-    savePlan,
-    saveSaved,
-} from '@/lib/storage';
+import { getPlan, getSaved, savePlan, saveSaved } from '../lib/storage';
 
 type Tab = 'plan' | 'saved';
 
-// লোকাল স্টোরেজ থেকে নিরাপদভাবে completed ডাটা লোড করার ফাংশন
 const getInitialCompleted = (): string[] => {
     if (typeof window === 'undefined') return [];
     try {
-        const completedData = localStorage.getItem('fitlog-completed');
-        if (!completedData) return [];
-        const parsedData = JSON.parse(completedData);
-        return Array.isArray(parsedData) ? parsedData : [];
+        const data = localStorage.getItem('fitlog-completed');
+        return data && Array.isArray(JSON.parse(data)) ? JSON.parse(data) : [];
     } catch {
         return [];
     }
@@ -36,7 +23,6 @@ const getInitialCompleted = (): string[] => {
 
 const MyPlan = () => {
     const [activeTab, setActiveTab] = useState<Tab>('plan');
-
     const [plan, setPlan] = useState<Workout[]>([]);
     const [saved, setSaved] = useState<Workout[]>([]);
     const [completed, setCompleted] = useState<string[]>(getInitialCompleted);
@@ -48,67 +34,50 @@ const MyPlan = () => {
         };
 
         loadData();
+        const handleStorage = () => loadData();
 
-        const handleStorageChange = () => {
-            loadData();
-        };
-
-        window.addEventListener('fitlog-storage', handleStorageChange);
-        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('fitlog-storage', handleStorage);
+        window.addEventListener('storage', handleStorage);
 
         return () => {
-            window.removeEventListener('fitlog-storage', handleStorageChange);
-            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('fitlog-storage', handleStorage);
+            window.removeEventListener('storage', handleStorage);
         };
     }, []);
 
     const currentItems = activeTab === 'plan' ? plan : saved;
 
-    const metrics = useMemo(() => {
-        const totalMinutes = plan.reduce(
-            (total, workout) => total + Number(workout.duration || 0),
-            0
-        );
-
-        const totalCalories = plan.reduce(
-            (total, workout) => total + Number(workout.calories || 0),
-            0
-        );
-
-        return {
-            exercises: plan.length,
-            minutes: totalMinutes,
-            calories: totalCalories,
-        };
-    }, [plan]);
+    const metrics = useMemo(() => ({
+        exercises: plan.length,
+        minutes: plan.reduce((acc, w) => acc + Number(w.duration || 0), 0),
+        calories: plan.reduce((acc, w) => acc + Number(w.calories || 0), 0),
+    }), [plan]);
 
     const handleRemove = (id: string) => {
         if (activeTab === 'plan') {
-            const updatedPlan = plan.filter((workout) => workout.id !== id);
-            setPlan(updatedPlan);
-            savePlan(updatedPlan);
+            const updated = plan.filter((w) => w.id !== id);
+            setPlan(updated);
+            savePlan(updated);
+            toast.success('Workout removed from your plan.');
             return;
         }
 
-        const updatedSaved = saved.filter((workout) => workout.id !== id);
-        setSaved(updatedSaved);
-        saveSaved(updatedSaved);
+        const updated = saved.filter((w) => w.id !== id);
+        setSaved(updated);
+        saveSaved(updated);
+        toast.success('Workout removed from saved.');
     };
 
     const handleDone = (id: string) => {
         if (completed.includes(id)) {
+            toast.info('Workout is already marked as done.');
             return;
         }
 
-        const updatedCompleted = [...completed, id];
-        setCompleted(updatedCompleted);
-
-        localStorage.setItem(
-            'fitlog-completed',
-            JSON.stringify(updatedCompleted)
-        );
-
-        window.dispatchEvent(new Event('fitlog-storage'));
+        const updated = [...completed, id];
+        setCompleted(updated);
+        localStorage.setItem('fitlog-completed', JSON.stringify(updated));
+        toast.success('Workout marked as done.');
     };
 
     return (
@@ -116,22 +85,11 @@ const MyPlan = () => {
             {/* Header */}
             <section className="border-b border-zinc-800">
                 <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-400 transition hover:text-lime-400"
-                    >
-                        <ArrowLeft size={18} />
-                        Back to Workouts
+                    <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-400 transition hover:text-lime-400">
+                        <ArrowLeft size={18} /> Back to Workouts
                     </Link>
-
-                    <p className="mt-8 text-sm font-bold tracking-[0.25em] text-lime-400">
-                        YOUR WORKOUTS
-                    </p>
-
-                    <h1 className="mt-3 text-4xl font-black uppercase sm:text-5xl">
-                        My Plan
-                    </h1>
-
+                    <p className="mt-8 text-sm font-bold tracking-[0.25em] text-lime-400">YOUR WORKOUTS</p>
+                    <h1 className="mt-3 text-4xl font-black uppercase sm:text-5xl">My Plan</h1>
                     <p className="mt-4 max-w-2xl text-zinc-400">
                         Track today&apos;s training and keep your favorite workouts saved for later.
                     </p>
@@ -141,55 +99,38 @@ const MyPlan = () => {
             {/* Metrics */}
             <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-                        <Dumbbell size={22} className="text-lime-400" />
-                        <p className="mt-4 text-sm text-zinc-500">Exercises</p>
-                        <p className="mt-1 text-3xl font-black">{metrics.exercises}</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-                        <CalendarDays size={22} className="text-lime-400" />
-                        <p className="mt-4 text-sm text-zinc-500">Total Minutes</p>
-                        <p className="mt-1 text-3xl font-black">{metrics.minutes}</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-                        <Flame size={22} className="text-lime-400" />
-                        <p className="mt-4 text-sm text-zinc-500">Calories</p>
-                        <p className="mt-1 text-3xl font-black">{metrics.calories}</p>
-                    </div>
+                    {[
+                        { label: 'Exercises', value: metrics.exercises, icon: Dumbbell },
+                        { label: 'Total Minutes', value: metrics.minutes, icon: CalendarDays },
+                        { label: 'Calories', value: metrics.calories, icon: Flame },
+                    ].map((m, i) => (
+                        <div key={i} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+                            <m.icon size={22} className="text-lime-400" />
+                            <p className="mt-4 text-sm text-zinc-500">{m.label}</p>
+                            <p className="mt-1 text-3xl font-black">{m.value}</p>
+                        </div>
+                    ))}
                 </div>
             </section>
 
             {/* Tabs & Content */}
             <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
                 <div className="mb-8 flex border-b border-zinc-800">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('plan')}
-                        className={`flex items-center gap-2 border-b-2 px-5 py-4 text-sm font-bold uppercase transition ${activeTab === 'plan'
-                            ? 'border-lime-400 text-lime-400'
-                            : 'border-transparent text-zinc-500 hover:text-white'
-                            }`}
-                    >
-                        <Dumbbell size={17} />
-                        Today&apos;s Plan
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('saved')}
-                        className={`flex items-center gap-2 border-b-2 px-5 py-4 text-sm font-bold uppercase transition ${activeTab === 'saved'
-                            ? 'border-lime-400 text-lime-400'
-                            : 'border-transparent text-zinc-500 hover:text-white'
-                            }`}
-                    >
-                        <Bookmark size={17} />
-                        Saved
-                    </button>
+                    {(['plan', 'saved'] as Tab[]).map((tab) => (
+                        <button
+                            key={tab}
+                            type="button"
+                            onClick={() => setActiveTab(tab)}
+                            className={`flex items-center gap-2 border-b-2 px-5 py-4 text-sm font-bold uppercase transition ${activeTab === tab ? 'border-lime-400 text-lime-400' : 'border-transparent text-zinc-500 hover:text-white'
+                                }`}
+                        >
+                            {tab === 'plan' ? <Dumbbell size={17} /> : <Bookmark size={17} />}
+                            {tab === 'plan' ? "Today's Plan" : 'Saved'}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Empty State */}
+                {/* Content / Empty State */}
                 {currentItems.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
                         <Dumbbell size={42} className="mx-auto text-zinc-700" />
@@ -197,19 +138,13 @@ const MyPlan = () => {
                             {activeTab === 'plan' ? 'Your plan is empty' : 'No saved workouts'}
                         </h2>
                         <p className="mx-auto mt-3 max-w-md text-zinc-500">
-                            {activeTab === 'plan'
-                                ? "Add workouts from the library to build today's plan."
-                                : 'Save workouts you want to come back to later.'}
+                            {activeTab === 'plan' ? "Add workouts from the library to build today's plan." : 'Save workouts you want to come back to later.'}
                         </p>
-                        <Link
-                            href="/"
-                            className="mt-7 inline-block rounded-full bg-lime-400 px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-lime-300"
-                        >
+                        <Link href="/" className="mt-7 inline-block rounded-full bg-lime-400 px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-lime-300">
                             Browse Workouts
                         </Link>
                     </div>
                 ) : (
-                    /* Workout List */
                     <div className="space-y-5">
                         {currentItems.map((workout) => (
                             <PlanCard
